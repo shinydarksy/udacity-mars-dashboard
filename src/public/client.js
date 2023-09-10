@@ -1,5 +1,5 @@
 const set = Immutable.set
-const headerImage = '/assets/images/milky-way.jpeg'
+const headerImage = '/assets/images/bg-header.jpeg'
 const BACKEND_PORT = 3000
 
 // this store object serves as a centralized location for storing and managing the state of the application, 
@@ -22,12 +22,16 @@ function onSelectTab(selectedTab) {
 window.onSelectTab = onSelectTab
 
 const formatDate = (date) => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const dateArr = date.split('-')
-    const year = dateArr[0]
-    const month = months[Number(dateArr[1]) - 1]
-    const day = dateArr[2]
-    return `${month} ${day} ${year}`
+    try {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const dateArr = date.split('-')
+        const year = dateArr[0]
+        const month = months[Number(dateArr[1]) - 1]
+        const day = dateArr[2]
+        return `${month} ${day} ${year}`
+    } catch (error) {
+        return(`Error format date: ${error}`);
+    }
 }
 
 const updateStore = (store, newState) => {
@@ -190,29 +194,44 @@ const getImageOfTheDay = (state) => {
         .then(apod => updateStore(store, { apod }))
 }
 
-const getRoverData = (rover_name) => {
-    fetch(`http://localhost:${BACKEND_PORT}/rovers/${rover_name}`)
-        .then(res => res.json())
-        .then(({ photo_manifest }) => updateStore(store,
-            {
-                rovers: set(store.rovers, rover_name, {
-                    ...store.rovers[rover_name],
-                    ...photo_manifest
-                })
-            },
-        ))
-}
+// Asynchronous function to get the data for a specified Mars rover
+const getRoverData = async (rover_name) => {
+    try {
+        // Await the fetch call to the backend route that retrieves rover information
+        const res = await fetch(`http://localhost:${BACKEND_PORT}/rovers/${rover_name}`);
 
-const getLatestRoverPhotos = (rover_name) => {
-    fetch(`http://localhost:${BACKEND_PORT}/rover_photos/${rover_name}`)
-        .then(res => res.json())
-        .then(({ latest_photos }) => {
-            updateStore(store, {
-                photos: {
-                    ...store.photos,
-                    [rover_name]: [...latest_photos],
-                }
+        // Once the response is received, process the JSON data
+        const data = await res.json();
+        const { photo_manifest } = data;
+
+        // Updates 'store' with rover-specific data retrieved from backend
+        updateStore(store, {
+            rovers: set(store.rovers, rover_name, {
+                ...store.rovers[rover_name],
+                ...photo_manifest
+            })
+        });
+
+    } catch (error) {
+        console.error("Error getting the latest rover photos:", error);
+    }
+}
+// Asynchronous function to get the latest photos of a specified Mars rover
+const getLatestRoverPhotos = async (rover_name) => {
+    try {
+        const res = await fetch(`http://localhost:${BACKEND_PORT}/rover_photos/${rover_name}`);
+        const data = await res.json();
+        const { latest_photos } = data;
+
+        // Updates 'store' with rover-specific photos retrieved from backend
+        updateStore(store, {
+            photos: {
+                ...store.photos,
+                [rover_name]: [...latest_photos],
             }
-            )
-        })
+        });
+
+    } catch (error) {
+        console.error("Error getting the latest rover photos:", error);
+    }
 }

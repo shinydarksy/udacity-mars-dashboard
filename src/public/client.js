@@ -63,6 +63,18 @@ const App = (state) => {
             </div>
             ${Nav(roverNames, selectedRover)}
         </header>
+        <div class="type-camera">
+        Type camera: 
+            <a href="/?camera-type=ALL">
+                ALL
+            </a>
+            <a href="/?camera-type=NAVCAM">
+                NAVCAM
+            </a>
+            <a href="/?camera-type=CHEMCAM">
+                CHEMCAM
+            </a>
+        </div>
         <main>
             ${RoverData(rovers, selectedRover, photos)}
         </main>
@@ -137,10 +149,15 @@ const RoverPhotos = (rover_name, max_date, photos) => {
     if (!rover) {
         getLatestRoverPhotos(rover_name)
     }
-
     const roverPhotos = store.photos[rover_name]
-
+  
     if (roverPhotos) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const cameraType = urlParams.get('camera-type');
+    
+        if(cameraType !== 'ALL') roverPhotos.filter((item)=>{
+            return item.name = cameraType
+        })
         return `
             <section>
                 <p>Check out some of ${rover_name}'s most recent photos. The following photos were taken on ${formatDate(max_date)}.</p>
@@ -158,6 +175,16 @@ const RoverPhotos = (rover_name, max_date, photos) => {
         </section>`
 }
 
+function isEmpty(obj) {
+    for (const prop in obj) {
+      if (Object.hasOwn(obj, prop)) {
+        return false;
+      }
+    }
+  
+    return true;
+  }
+
 const RoverData = (rovers, selectedRover, photos) => {
     const rover = Object.keys(rovers).find(key => key === selectedRover)
 
@@ -165,9 +192,8 @@ const RoverData = (rovers, selectedRover, photos) => {
         getRoverData(selectedRover)
     }
 
-    const roverToDisplay = rovers[selectedRover];
-
-    if (roverToDisplay) {
+    let roverToDisplay = rovers[selectedRover];
+    if (!isEmpty(roverToDisplay)) {
         return (
             `
                 <section>
@@ -203,7 +229,6 @@ const getRoverData = async (rover_name) => {
         // Once the response is received, process the JSON data
         const data = await res.json();
         const { photo_manifest } = data;
-
         // Updates 'store' with rover-specific data retrieved from backend
         updateStore(store, {
             rovers: set(store.rovers, rover_name, {

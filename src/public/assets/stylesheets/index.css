@@ -134,3 +134,20 @@ footer {
 @media (min-width: 1824px) {
 
 }
+
+.type-camera{
+  margin-top: 20px;
+}
+
+.type-camera a {
+  background-color: #af3383;
+  border: none;
+  color: white;
+  padding: 10px 25px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  cursor: pointer;
+}
